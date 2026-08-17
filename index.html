@@ -187,6 +187,8 @@
     }
     .dd-panel.up { transform-origin: bottom center; }
     .dd-panel:not(.up) { transform-origin: top center; }
+    /* must come after the display:flex rule above, or [hidden] is ignored */
+    .dd-panel[hidden] { display: none; }
 
     .dd-list { overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
     .dd-item {
