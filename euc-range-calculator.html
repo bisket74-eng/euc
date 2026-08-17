@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0f1115">
+<title>EUC Range Calculator</title>
+<style>
+    :root {
+        --bg: #0f1115;
+        --panel: #1a1d24;
+        --sunk: #0c0e12;
+        --accent: #00e5ff;
+        --accent2: #ff2a6d;
+        --text: #f0f4f8;
+        --muted: #8b95a5;
+        --line: rgba(255,255,255,0.08);
+        --r: 10px;
+    }
+
+    /* Everything scales off viewport height so it never scrolls. */
+    html { font-size: clamp(11.5px, 1.78vh, 17px); }
+
+    * { box-sizing: border-box; margin: 0; padding: 0;
+        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        -webkit-tap-highlight-color: transparent; }
+
+    html, body { height: 100%; }
+
+    body {
+        background: var(--bg);
+        color: var(--text);
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        padding: 0.4rem;
+        overflow: hidden;
+    }
+
+    .container {
+        background: var(--panel);
+        width: 100%;
+        max-width: 860px;
+        height: 100%;
+        border-radius: var(--r);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* ---------- header + unit switch ---------- */
+    .header {
+        padding: 0.6rem 0.85rem;
+        background: linear-gradient(90deg, #13151a 0%, #1a1d24 100%);
+        border-bottom: 2px solid var(--accent);
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.6rem;
+    }
+    .header h1 {
+        font-size: clamp(0.92rem, 3.9vw, 1.35rem);
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.9px;
+        white-space: nowrap;
+        min-width: 0;
+    }
+    .header span { color: var(--accent); }
+
+    .unit-toggle {
+        display: flex;
+        flex: 0 0 auto;
+        background: var(--sunk);
+        border: 1px solid rgba(0,229,255,0.25);
+        border-radius: 999px;
+        padding: 2px;
+    }
+    .unit-toggle button {
+        border: none;
+        background: transparent;
+        color: var(--muted);
+        font-size: 0.8rem;
+        font-weight: 800;
+        letter-spacing: 0.8px;
+        padding: 0.4rem 0.7rem;
+        border-radius: 999px;
+        cursor: pointer;
+        transition: background .18s, color .18s;
+    }
+    .unit-toggle button.active {
+        background: linear-gradient(135deg, var(--accent) 0%, #00a8c4 100%);
+        color: #04222a;
+        box-shadow: 0 0 10px rgba(0,229,255,0.35);
+    }
+
+    .body-grid {
+        flex: 1 1 auto;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+    }
+    @media (min-width: 800px) {
+        .body-grid { flex-direction: row; }
+        .body-grid > section { flex: 1 1 50%; }
+        .input-section { border-right: 1px solid var(--line); }
+    }
+
+    .input-section, .output-section {
+        padding: 0.7rem 0.9rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-around;
+        gap: 0.35rem;
+        min-height: 0;
+    }
+    .output-section { background: rgba(0,229,255,0.02); }
+
+    label, .cap {
+        display: block;
+        font-weight: 700;
+        color: var(--muted);
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.7px;
+        margin-bottom: 0.2rem;
+    }
+
+    /* ---------- custom dropdown trigger ---------- */
+    .dd-btn {
+        position: relative;
+        width: 100%;
+        min-height: 2.9rem;
+        text-align: left;
+        background: linear-gradient(180deg, #171b22 0%, #0f1218 100%);
+        color: var(--text);
+        border: 1px solid rgba(0,229,255,0.28);
+        padding: 0.5rem 2.4rem 0.5rem 0.85rem;
+        border-radius: 8px;
+        font-size: 1.05rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: border-color .18s, box-shadow .18s;
+    }
+    .dd-btn:focus-visible, .dd-btn.open {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(0,229,255,0.15);
+    }
+    .dd-btn::after {
+        content: "";
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        width: 0.5rem; height: 0.5rem;
+        border-right: 2px solid var(--accent);
+        border-bottom: 2px solid var(--accent);
+        transform: translateY(-70%) rotate(45deg);
+    }
+
+    /* ---------- anchored dropdown ---------- */
+    .backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(4,6,10,0.45);
+        z-index: 50;
+    }
+    .backdrop[hidden] { display: none; }
+    @keyframes dropIn {
+        from { transform: translateY(-6px) scaleY(.94); opacity: 0; }
+        to   { transform: translateY(0) scaleY(1); opacity: 1; }
+    }
+
+    .dd-panel {
+        position: fixed;
+        z-index: 51;
+        background: linear-gradient(180deg, #1c212a 0%, #14171e 100%);
+        border: 1px solid rgba(0,229,255,0.45);
+        border-radius: 10px;
+        box-shadow: 0 14px 34px rgba(0,0,0,0.65), 0 0 0 3px rgba(0,229,255,0.10);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        animation: dropIn .14s ease-out;
+    }
+    .dd-panel.up { transform-origin: bottom center; }
+    .dd-panel:not(.up) { transform-origin: top center; }
+
+    .dd-list { overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+    .dd-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.6rem;
+        width: 100%;
+        min-height: 2.9rem;
+        padding: 0.55rem 0.85rem;
+        background: transparent;
+        border: none;
+        border-bottom: 1px solid rgba(255,255,255,0.04);
+        border-left: 3px solid transparent;
+        color: var(--text);
+        font-size: 1.05rem;
+        font-weight: 600;
+        text-align: left;
+        cursor: pointer;
+    }
+    .dd-item:active { background: rgba(0,229,255,0.08); }
+    .dd-item.selected {
+        border-left-color: var(--accent);
+        background: linear-gradient(90deg, rgba(0,229,255,0.12), transparent 70%);
+        color: var(--accent);
+    }
+    .dd-item .meta { font-size: 0.78rem; color: var(--muted); font-weight: 600; letter-spacing: .4px; white-space: nowrap; }
+    .dd-item.selected .meta { color: rgba(0,229,255,0.7); }
+
+    /* ---------- sliders ---------- */
+    .slider-header { display: flex; justify-content: space-between; align-items: baseline; }
+    .slider-value { color: var(--accent); font-weight: 800; font-size: 1.15rem; }
+
+    input[type=range] {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 100%;
+        height: 0.75rem;
+        background: linear-gradient(90deg, rgba(0,229,255,.35), rgba(255,42,109,.35));
+        border-radius: 0.5rem;
+        border: 1px solid var(--line);
+        outline: none;
+        margin: 0.35rem 0 0.15rem;
+        padding: 0;
+        touch-action: pan-y;
+    }
+    input[type=range]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        height: 1.85rem; width: 1.85rem;
+        border-radius: 50%;
+        background: radial-gradient(circle at 35% 35%, #ffffff 0%, var(--accent) 55%, #0092a8 100%);
+        border: 2px solid #0f1115;
+        cursor: pointer;
+        box-shadow: 0 0 10px rgba(0,229,255,0.55);
+    }
+    input[type=range]::-moz-range-thumb {
+        height: 1.85rem; width: 1.85rem;
+        border-radius: 50%;
+        background: var(--accent);
+        border: 2px solid #0f1115;
+        box-shadow: 0 0 10px rgba(0,229,255,0.55);
+    }
+
+    /* ---------- output ---------- */
+    .specs-card {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 0.5rem 0.7rem;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.4rem 0.6rem;
+    }
+    .spec-item { display: flex; flex-direction: column; }
+    .spec-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+    .spec-value { font-size: 1.05rem; font-weight: 700; color: #fff; }
+
+    .result-card {
+        background: linear-gradient(135deg, rgba(0,229,255,0.12) 0%, rgba(255,42,109,0.12) 100%);
+        border: 1px solid rgba(0,229,255,0.35);
+        border-radius: 10px;
+        padding: 0.6rem 0.5rem;
+        text-align: center;
+    }
+    .result-title { color: var(--accent); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1.2px; }
+    .result-range { font-size: 2.2rem; font-weight: 800; line-height: 1.15; text-shadow: 0 0 12px rgba(0,229,255,0.45); }
+    .result-sub { color: var(--muted); font-size: 0.78rem; }
+
+    .breakdown {
+        font-size: 0.86rem;
+        color: var(--muted);
+        background: var(--sunk);
+        padding: 0.55rem 0.7rem;
+        border-radius: 8px;
+        border: 1px solid var(--line);
+    }
+    .breakdown-row { display: flex; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.22rem; }
+    .breakdown-row span:last-child { color: #dfe6ee; font-weight: 600; white-space: nowrap; }
+    .breakdown-row:last-child {
+        margin-bottom: 0;
+        padding-top: 0.3rem;
+        border-top: 1px solid var(--line);
+    }
+    .breakdown-row:last-child span { color: #fff; font-weight: 700; }
+    .warn span:last-child { color: var(--accent2) !important; }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <header class="header">
+        <h1>EUC <span>Range</span> Calculator</h1>
+        <div class="unit-toggle" role="group" aria-label="Units">
+            <button type="button" id="unitImp" class="active" title="Miles, pounds, Fahrenheit">MI</button>
+            <button type="button" id="unitMet" title="Kilometers, kilograms, Celsius">KM</button>
+        </div>
+    </header>
+
+    <div class="body-grid">
+        <section class="input-section">
+            <div>
+                <label id="lbl-brand">Brand</label>
+                <button type="button" class="dd-btn" id="brandBtn" aria-haspopup="listbox">Begode</button>
+            </div>
+
+            <div>
+                <label id="lbl-model">Model</label>
+                <button type="button" class="dd-btn" id="modelBtn" aria-haspopup="listbox">EX30</button>
+            </div>
+
+            <div>
+                <div class="slider-header">
+                    <label for="weight" id="lbl-weight">Rider + Gear (lbs)</label>
+                    <span class="slider-value" id="weightVal">180</span>
+                </div>
+                <input type="range" id="weight" min="100" max="350" step="5" value="180">
+            </div>
+
+            <div>
+                <div class="slider-header">
+                    <label for="speed" id="lbl-speed">Avg Cruising Speed (mph)</label>
+                    <span class="slider-value" id="speedVal">30</span>
+                </div>
+                <input type="range" id="speed" min="8" max="55" step="1" value="30">
+            </div>
+
+            <div>
+                <div class="slider-header">
+                    <label for="temp" id="lbl-temp">Ambient Temp (°F)</label>
+                    <span class="slider-value" id="tempVal">60</span>
+                </div>
+                <input type="range" id="temp" min="10" max="110" step="1" value="60">
+            </div>
+        </section>
+
+        <section class="output-section">
+            <div class="specs-card">
+                <div class="spec-item"><span class="spec-label">Battery</span><span class="spec-value" id="spec-battery">—</span></div>
+                <div class="spec-item"><span class="spec-label">Motor</span><span class="spec-value" id="spec-motor">—</span></div>
+                <div class="spec-item"><span class="spec-label">Tire / Weight</span><span class="spec-value" id="spec-tire">—</span></div>
+                <div class="spec-item"><span class="spec-label">Suspension</span><span class="spec-value" id="spec-suspension">—</span></div>
+            </div>
+
+            <div class="result-card">
+                <div class="result-title">Plug In Between</div>
+                <div class="result-range" id="result-window">—</div>
+                <div class="result-sub">Hits 20% pack remaining at <b id="result-target">—</b></div>
+            </div>
+
+            <div class="breakdown">
+                <div class="breakdown-row"><span>Est. consumption</span><span id="calc-consumption">—</span></div>
+                <div class="breakdown-row" id="row-temp"><span>Cold-weather capacity</span><span id="calc-temp">—</span></div>
+                <div class="breakdown-row"><span>Usable to 20%</span><span id="calc-usable">—</span></div>
+                <div class="breakdown-row"><span>Range if run to empty</span><span id="calc-max">—</span></div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<!-- themed dropdown -->
+<div class="backdrop" id="backdrop" hidden></div>
+<div class="dd-panel" id="ddPanel" hidden>
+    <div class="dd-list" id="ddList" role="listbox"></div>
+</div>
+
+<script>
+/* ------------------------------------------------------------------
+   EUC database — models sold 2021-2026 across the six brands.
+   battery = Wh (largest stock pack), motor = rated W,
+   tire = overall wheel diameter in inches, curbLb = wheel weight.
+
+   Specs marked (est) below are best-available figures where the
+   retailer listing was ambiguous or the model is long discontinued.
+   Everything else is taken from current manufacturer/eWheels listings.
+------------------------------------------------------------------ */
+const eucDatabase = {
+    "Begode": [
+        { id:"master_pro_v3",  name:"Master Pro V3",   battery:4800, motor:5000, tire:22, curbLb:115,  suspension:true },
+        { id:"master_pro_v2",  name:"Master Pro V2",   battery:4800, motor:4500, tire:22, curbLb:115,  suspension:true },
+        { id:"panther",        name:"Panther",         battery:4400, motor:5000, tire:22, curbLb:116,  suspension:true },
+        { id:"ex30",           name:"EX30",            battery:3600, motor:4000, tire:20, curbLb:101,  suspension:true },
+        { id:"et_max",         name:"ET Max",          battery:3000, motor:4500, tire:20, curbLb:110,  suspension:true },   // est
+        { id:"xway_3000",      name:"X-Way 3000Wh",    battery:3000, motor:4500, tire:20, curbLb:98,   suspension:true },
+        { id:"ex20s",          name:"EX20S",           battery:2880, motor:3000, tire:20, curbLb:103,  suspension:true },
+        { id:"monster_pro_se", name:"Monster Pro SE",  battery:2880, motor:3500, tire:24, curbLb:88,   suspension:false },
+        { id:"monster_pro",    name:"Monster Pro",     battery:2400, motor:3500, tire:24, curbLb:93,   suspension:false },  // est
+        { id:"exn",            name:"EX.N",            battery:2700, motor:2800, tire:20, curbLb:73,   suspension:true },
+        { id:"blitz",          name:"Blitz",           battery:2400, motor:3500, tire:20, curbLb:79,   suspension:true },
+        { id:"extreme",        name:"Extreme",         battery:2400, motor:3500, tire:17, curbLb:86,   suspension:true },
+        { id:"xway_2400",      name:"X-Way 2400Wh",    battery:2400, motor:4500, tire:20, curbLb:87,   suspension:true },
+        { id:"master_v23",     name:"Master V2/V3",    battery:2400, motor:3500, tire:20, curbLb:90,   suspension:true },
+        { id:"t4_max",         name:"T4 Max",          battery:1800, motor:3000, tire:17, curbLb:79,   suspension:true },
+        { id:"t4_pro",         name:"T4 Pro",          battery:1800, motor:2500, tire:17, curbLb:71,   suspension:true },
+        { id:"t4",             name:"T4",              battery:1440, motor:2500, tire:17, curbLb:71,   suspension:true },
+        { id:"rs19",           name:"RS19 HS",         battery:1800, motor:2500, tire:19, curbLb:62,   suspension:false },  // est
+        { id:"msp_hs",         name:"MSP HS",          battery:1845, motor:2500, tire:19, curbLb:61,   suspension:false },  // est
+        { id:"tesla_v3",       name:"Tesla V3",        battery:1500, motor:2000, tire:16, curbLb:49,   suspension:false },
+        { id:"nikola_plus",    name:"Nikola+",         battery:1451, motor:2000, tire:17, curbLb:60,   suspension:false },
+        { id:"hero",           name:"Hero",            battery:1440, motor:2800, tire:20, curbLb:80,   suspension:true },
+        { id:"falcon",         name:"Falcon 50S",      battery:900,  motor:1500, tire:15, curbLb:55,   suspension:true },
+        { id:"a2",             name:"A2 / A2+",        battery:750,  motor:1000, tire:15, curbLb:41,   suspension:false },
+        { id:"mten5",          name:"MTen5 / 5+",      battery:750,  motor:1200, tire:12, curbLb:41,   suspension:false },
+        { id:"mten4p",         name:"MTen4P",          battery:750,  motor:1000, tire:11, curbLb:28,   suspension:false },
+        { id:"a1",             name:"A1",              battery:180,  motor:800,  tire:14, curbLb:29,   suspension:false }
+    ],
+    "LeaperKim": [
+        { id:"oryx",        name:"Oryx",         battery:4700, motor:4200, tire:22, curbLb:127,  suspension:true },
+        { id:"sherman_l",   name:"Sherman-L",    battery:4000, motor:3200, tire:20, curbLb:102,  suspension:true },
+        { id:"sherman_s",   name:"Sherman-S",    battery:3600, motor:3000, tire:20, curbLb:100,  suspension:true },
+        { id:"sherman_max", name:"Sherman Max",  battery:3600, motor:2800, tire:20, curbLb:106,  suspension:false },       // est
+        { id:"sherman",     name:"Sherman",      battery:3200, motor:2500, tire:20, curbLb:77,   suspension:false },
+        { id:"abrams",      name:"Abrams",       battery:2700, motor:3500, tire:22, curbLb:99,   suspension:false },
+        { id:"lynx_s",      name:"Lynx-S",       battery:2700, motor:3800, tire:20, curbLb:95,   suspension:true },
+        { id:"lynx",        name:"Lynx",         battery:2700, motor:3200, tire:20, curbLb:88,   suspension:true },
+        { id:"patton",      name:"Patton",       battery:2220, motor:3000, tire:17, curbLb:86,   suspension:true },
+        { id:"patton_s",    name:"Patton-S",     battery:2220, motor:3000, tire:17, curbLb:81,   suspension:true }
+    ],
+    "Inmotion": [
+        { id:"p6",       name:"P6",              battery:4200, motor:6000, tire:20, curbLb:112, suspension:true },
+        { id:"v13_pro",  name:"V13 Pro",         battery:3024, motor:4500, tire:22, curbLb:120, suspension:true },
+        { id:"v13",      name:"V13 Challenger",  battery:3024, motor:4500, tire:22, curbLb:117, suspension:true },
+        { id:"v14",      name:"V14 Adventure",   battery:2400, motor:4000, tire:17, curbLb:86,  suspension:true },
+        { id:"v12_ht",   name:"V12 High Torque", battery:1750, motor:2800, tire:16, curbLb:66,  suspension:false },
+        { id:"v12",      name:"V12",             battery:1750, motor:2500, tire:16, curbLb:64,  suspension:false },
+        { id:"v11y",     name:"V11Y",            battery:1500, motor:2500, tire:20, curbLb:66,  suspension:true },
+        { id:"v11",      name:"V11",             battery:1500, motor:2000, tire:18, curbLb:60,  suspension:true },
+        { id:"v10f",     name:"V10F",            battery:960,  motor:1800, tire:16, curbLb:49,  suspension:false },        // est
+        { id:"v9",       name:"V9",              battery:750,  motor:1000, tire:15, curbLb:51,  suspension:true },
+        { id:"v8s",      name:"V8S",             battery:518,  motor:1000, tire:16, curbLb:35,  suspension:false },
+        { id:"v8f",      name:"V8F",             battery:518,  motor:1000, tire:16, curbLb:35,  suspension:false },
+        { id:"v5f",      name:"V5F",             battery:320,  motor:550,  tire:14, curbLb:25,  suspension:false }         // est
+    ],
+    "King Song": [
+        { id:"f22_pro",   name:"F22 Pro",        battery:3108, motor:5500, tire:20, curbLb:106, suspension:true },
+        { id:"f18",       name:"F18",            battery:2700, motor:5000, tire:20, curbLb:88,  suspension:true },
+        { id:"s22_pro",   name:"S22 Pro",        battery:2220, motor:4000, tire:20, curbLb:77,  suspension:true },
+        { id:"s22_proplus", name:"S22 Pro+",     battery:2160, motor:4000, tire:20, curbLb:77,  suspension:true },
+        { id:"s22",       name:"S22 / S20 Eagle",battery:1776, motor:3300, tire:20, curbLb:77,  suspension:true },
+        { id:"s19",       name:"S19",            battery:1554, motor:2200, tire:19, curbLb:66,  suspension:true },         // est
+        { id:"s16_pro",   name:"S16 Pro",        battery:1480, motor:3000, tire:17, curbLb:68,  suspension:true },
+        { id:"18xl_pro",  name:"18XL Pro",       battery:1554, motor:2200, tire:18, curbLb:55,  suspension:false },
+        { id:"18xl",      name:"18XL",           battery:1554, motor:2200, tire:18, curbLb:53,  suspension:false },
+        { id:"16x_pro",   name:"16X Pro",        battery:1554, motor:2200, tire:17, curbLb:53,  suspension:false },
+        { id:"16x",       name:"16X",            battery:1554, motor:2200, tire:17, curbLb:52,  suspension:false },
+        { id:"s18",       name:"S18",            battery:1110, motor:2200, tire:18, curbLb:55,  suspension:true },
+        { id:"16s",       name:"16S",            battery:840,  motor:1200, tire:16, curbLb:40,  suspension:false },        // est
+        { id:"14d",       name:"14D",            battery:420,  motor:800,  tire:14, curbLb:30,  suspension:false }         // est
+    ],
+    "Extreme Bull": [
+        { id:"commander_pro_max", name:"Commander Pro Max", battery:4400, motor:4000, tire:20, curbLb:121, suspension:true },
+        { id:"commander_gt_pro_plus", name:"Commander GT Pro+", battery:4400, motor:4000, tire:20, curbLb:121, suspension:true },
+        { id:"k6_max",            name:"K6 Max (dual motor)", battery:3500, motor:7000, tire:20, curbLb:143, suspension:true },
+        { id:"commander_pro",     name:"Commander Pro",     battery:3600, motor:3500, tire:20, curbLb:95,  suspension:true },
+        { id:"commander",         name:"Commander",         battery:3600, motor:3000, tire:20, curbLb:88,  suspension:true },
+        { id:"commander_gt_pro",  name:"Commander GT Pro",  battery:3000, motor:4000, tire:20, curbLb:118, suspension:true },
+        { id:"commander_mini",    name:"Commander Mini",    battery:2400, motor:3200, tire:17, curbLb:88,  suspension:true }
+    ],
+    "Nosfet": [
+        { id:"apex", name:"Apex", battery:2700, motor:3200, tire:20, curbLb:86, suspension:true },
+        { id:"xeno", name:"Xeno", battery:2200, motor:2500, tire:20, curbLb:73, suspension:true },
+        { id:"aeon", name:"Aeon", battery:1300, motor:2200, tire:17, curbLb:63, suspension:true },
+        { id:"aero", name:"Aero", battery:1110, motor:2000, tire:15, curbLb:55, suspension:true }
+    ]
+};
+
+const $ = id => document.getElementById(id);
+const dom = {
+    brandBtn:$('brandBtn'), modelBtn:$('modelBtn'),
+    weight:$('weight'), weightVal:$('weightVal'),
+    speed:$('speed'),   speedVal:$('speedVal'),
+    temp:$('temp'),     tempVal:$('tempVal'),
+    lblWeight:$('lbl-weight'), lblSpeed:$('lbl-speed'), lblTemp:$('lbl-temp'),
+    unitImp:$('unitImp'), unitMet:$('unitMet'),
+    backdrop:$('backdrop'), ddPanel:$('ddPanel'), ddList:$('ddList'),
+    specBattery:$('spec-battery'), specMotor:$('spec-motor'),
+    specTire:$('spec-tire'), specSuspension:$('spec-suspension'),
+    resultWindow:$('result-window'), resultTarget:$('result-target'),
+    calcConsumption:$('calc-consumption'), calcTemp:$('calc-temp'),
+    rowTemp:$('row-temp'), calcUsable:$('calc-usable'), calcMax:$('calc-max')
+};
+
+/* ---------------- units ---------------- */
+const LB_KG   = 0.45359237;
+const KM_MI   = 1.609344;
+const G       = 9.80665;
+const MILE_M  = 1609.344;
+const MPH_MS  = 0.44704;
+const DRIVE_EFF = 0.82;   // motor + controller + drivetrain
+const RESERVE   = 0.20;   // pack fraction you want left
+
+let metric = false;
+
+// canonical state is always imperial; the sliders just display it
+const state = { weightLb: 180, speedMph: 30, tempF: 60 };
+
+function setRange(el, min, max, step, val) {
+    el.min = min; el.max = max; el.step = step;
+    el.value = Math.min(max, Math.max(min, val));
+}
+
+function applyUnits() {
+    dom.unitImp.classList.toggle('active', !metric);
+    dom.unitMet.classList.toggle('active', metric);
+
+    if (metric) {
+        dom.lblWeight.textContent = "Rider + Gear (kg)";
+        dom.lblSpeed.textContent  = "Avg Cruising Speed (km/h)";
+        dom.lblTemp.textContent   = "Ambient Temp (\u00B0C)";
+        setRange(dom.weight, 45, 159, 1, Math.round(state.weightLb * LB_KG));
+        setRange(dom.speed,  13,  89, 1, Math.round(state.speedMph * KM_MI));
+        setRange(dom.temp,  -12,  43, 1, Math.round((state.tempF - 32) * 5 / 9));
+    } else {
+        dom.lblWeight.textContent = "Rider + Gear (lbs)";
+        dom.lblSpeed.textContent  = "Avg Cruising Speed (mph)";
+        dom.lblTemp.textContent   = "Ambient Temp (\u00B0F)";
+        setRange(dom.weight, 100, 350, 5, Math.round(state.weightLb / 5) * 5);
+        setRange(dom.speed,    8,  55, 1, Math.round(state.speedMph));
+        setRange(dom.temp,    10, 110, 1, Math.round(state.tempF));
+    }
+    readSliders();
+}
+
+function readSliders() {
+    const w = +dom.weight.value, s = +dom.speed.value, t = +dom.temp.value;
+    if (metric) {
+        state.weightLb = w / LB_KG;
+        state.speedMph = s / KM_MI;
+        state.tempF    = t * 9 / 5 + 32;
+    } else {
+        state.weightLb = w; state.speedMph = s; state.tempF = t;
+    }
+    dom.weightVal.textContent = w;
+    dom.speedVal.textContent  = s;
+    dom.tempVal.textContent   = t;
+    calculate();
+}
+
+const dist  = mi => metric ? mi * KM_MI : mi;
+const distU = () => metric ? "km" : "mi";
+const massU = lb => metric ? Math.round(lb * LB_KG) + " kg" : lb + " lb";
+
+/* ---------------- physics ---------------- */
+function tireCrr(tire) {
+    if (tire >= 21) return 0.0150;   // fat knobby moto tires roll worse
+    if (tire >= 18) return 0.0135;
+    return 0.0120;
+}
+
+function tempCapacityFactor(f) {
+    // Cold cells give up usable energy, and sag hits low-voltage cutoff sooner.
+    if (f < 68) return Math.max(0.72, 1 - (68 - f) * 0.0035);
+    if (f > 95) return Math.max(0.95, 1 - (f - 95) * 0.0015);
+    return 1;
+}
+
+function whPerMile(model, riderLb, mph, tempF) {
+    const totalKg = (riderLb + model.curbLb) * LB_KG;
+
+    // 1. Rolling resistance — scales with TOTAL mass (rider + wheel)
+    const rollN = tireCrr(model.tire) * totalKg * G;
+
+    // 2. Aero drag — quadratic in speed, scales with air density + frontal area
+    const tempK = (tempF - 32) * 5 / 9 + 273.15;
+    const rho   = 1.225 * (288.15 / tempK);                 // cold air is denser
+    const riderCdA = 0.46 * Math.pow(riderLb / 165, 0.35);
+    const wheelCdA = 0.055 + (model.tire - 14) * 0.006;
+    const v = mph * MPH_MS;
+    const aeroN = 0.5 * rho * (riderCdA + wheelCdA) * v * v;
+
+    // 3. Propulsion energy measured at the battery
+    const propulsion = ((rollN + aeroN) * MILE_M / 3600) / DRIVE_EFF;
+
+    // 4. Fixed overhead: balance loop, board, lights, damper drag (time-based)
+    const idleW = 95 + (model.suspension ? 25 : 0);
+
+    return propulsion + idleW / mph;
+}
+
+/* ---------------- selection ---------------- */
+let brand = "Begode";
+let modelId = "ex30";
+const currentModel = () => eucDatabase[brand].find(m => m.id === modelId);
+
+function calculate() {
+    const model = currentModel();
+    if (!model) return;
+
+    dom.brandBtn.textContent = brand;
+    dom.modelBtn.textContent = model.name;
+
+    dom.specBattery.textContent    = model.battery + " Wh";
+    dom.specMotor.textContent      = model.motor + " W";
+    dom.specTire.textContent       = model.tire + '" / ' + massU(model.curbLb);
+    dom.specSuspension.textContent = model.suspension ? "Yes" : "No";
+
+    const consumption = whPerMile(model, state.weightLb, state.speedMph, state.tempF);
+    const tFactor     = tempCapacityFactor(state.tempF);
+    const effective   = model.battery * tFactor;       // Wh actually available today
+    const usable      = effective * (1 - RESERVE);     // Wh down to the 20% mark
+
+    const chargeAt = usable / consumption;             // miles until 20% left
+    const maxRange = effective / consumption;          // miles to a dead pack
+
+    // Window: ±10% of the distance, never wider than a 10-mile spread
+    const half = Math.min(5, Math.max(1.5, chargeAt * 0.10));
+    const lo = Math.max(0, Math.round(dist(chargeAt - half)));
+    const hi = Math.round(dist(chargeAt + half));
+
+    dom.resultWindow.textContent = lo + " \u2013 " + hi + " " + distU();
+    dom.resultTarget.textContent = dist(chargeAt).toFixed(1) + " " + distU();
+    dom.calcConsumption.textContent = (metric ? consumption / KM_MI : consumption).toFixed(1)
+                                      + " Wh/" + distU();
+    dom.calcTemp.textContent  = Math.round(tFactor * 100) + "% (" + Math.round(effective) + " Wh)";
+    dom.rowTemp.classList.toggle('warn', tFactor < 0.95);
+    dom.calcUsable.textContent = Math.round(usable) + " Wh";
+    dom.calcMax.textContent    = Math.round(dist(maxRange)) + " " + distU();
+}
+
+/* ---------------- anchored dropdown ---------------- */
+let ddOpen = false, ddTrigger = null;
+
+function openDropdown(items, selectedValue, onPick, trigger) {
+    if (ddOpen && ddTrigger === trigger) { closeDropdown(); return; }
+
+    dom.ddList.innerHTML = '';
+    items.forEach(it => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'dd-item' + (it.value === selectedValue ? ' selected' : '');
+        b.setAttribute('role', 'option');
+        const nameEl = document.createElement('span');
+        nameEl.textContent = it.label;
+        const metaEl = document.createElement('span');
+        metaEl.className = 'meta';
+        metaEl.textContent = it.meta || '';
+        b.appendChild(nameEl);
+        b.appendChild(metaEl);
+        b.addEventListener('click', () => { onPick(it.value); closeDropdown(); });
+        dom.ddList.appendChild(b);
+    });
+
+    dom.backdrop.hidden = false;
+    dom.ddPanel.hidden = false;
+    ddOpen = true;
+    ddTrigger = trigger;
+    trigger.classList.add('open');
+    positionDropdown();
+
+    const sel = dom.ddList.querySelector('.selected');
+    if (sel) sel.scrollIntoView({ block: 'nearest' });
+    history.pushState({ eucDD: true }, '');
+}
+
+// Fixed-position so it escapes the container's overflow clipping,
+// but pinned to the button it belongs to — opens downward, flips up
+// only when there genuinely isn't room.
+function positionDropdown() {
+    if (!ddOpen || !ddTrigger) return;
+    const p = dom.ddPanel;
+    const r = ddTrigger.getBoundingClientRect();
+    const gap = 4, edge = 6;
+
+    p.style.left  = r.left + 'px';
+    p.style.width = r.width + 'px';
+    p.style.top = p.style.bottom = 'auto';
+    p.classList.remove('up');
+    p.style.maxHeight = 'none';
+
+    const below = window.innerHeight - r.bottom - gap - edge;
+    const above = r.top - gap - edge;
+    const wanted = dom.ddList.scrollHeight + 2;
+
+    if (wanted <= below || below >= above) {
+        p.style.top = (r.bottom + gap) + 'px';
+        p.style.maxHeight = Math.min(below, window.innerHeight * 0.62) + 'px';
+    } else {
+        p.classList.add('up');
+        p.style.bottom = (window.innerHeight - r.top + gap) + 'px';
+        p.style.maxHeight = Math.min(above, window.innerHeight * 0.62) + 'px';
+    }
+}
+
+function closeDropdown(fromPop) {
+    if (!ddOpen) return;
+    dom.backdrop.hidden = true;
+    dom.ddPanel.hidden = true;
+    ddOpen = false;
+    if (ddTrigger) { ddTrigger.classList.remove('open'); ddTrigger = null; }
+    if (!fromPop && history.state && history.state.eucDD) history.back();
+}
+
+dom.backdrop.addEventListener('click', () => closeDropdown());
+window.addEventListener('popstate', () => { if (ddOpen) closeDropdown(true); });
+window.addEventListener('resize', () => { if (ddOpen) positionDropdown(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDropdown(); });
+
+dom.brandBtn.addEventListener('click', () => {
+    const items = Object.keys(eucDatabase).map(b => ({
+        value: b, label: b, meta: eucDatabase[b].length + " models"
+    }));
+    openDropdown(items, brand, b => {
+        brand = b;
+        modelId = eucDatabase[b][0].id;
+        calculate();
+    }, dom.brandBtn);
+});
+
+dom.modelBtn.addEventListener('click', () => {
+    const items = eucDatabase[brand].map(m => ({
+        value: m.id, label: m.name, meta: m.battery + " Wh \u00B7 " + m.tire + '"'
+    }));
+    openDropdown(items, modelId, id => {
+        modelId = id;
+        calculate();
+    }, dom.modelBtn);
+});
+
+/* ---------------- wiring ---------------- */
+['weight', 'speed', 'temp'].forEach(id => dom[id].addEventListener('input', readSliders));
+dom.unitImp.addEventListener('click', () => { if (metric) { metric = false; applyUnits(); } });
+dom.unitMet.addEventListener('click', () => { if (!metric) { metric = true; applyUnits(); } });
+
+applyUnits();
+</script>
+</body>
+</html>
