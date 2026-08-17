@@ -29,12 +29,12 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            padding: 20px;
+            padding: 10px;
         }
 
         .container {
             background-color: var(--panel-bg);
-            max-width: 800px;
+            max-width: 780px;
             width: 100%;
             border-radius: var(--border-radius);
             box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05);
@@ -51,47 +51,47 @@
 
         .header {
             grid-column: 1 / -1;
-            padding: 25px;
+            padding: 15px 20px;
             background: linear-gradient(90deg, #13151a 0%, #1a1d24 100%);
             border-bottom: 2px solid var(--primary-accent);
             text-align: center;
-            position: relative;
         }
 
         .header h1 {
-            font-size: 1.8rem;
+            font-size: 1.5rem;
             text-transform: uppercase;
             letter-spacing: 2px;
-            margin-bottom: 5px;
+            margin-bottom: 2px;
         }
 
         .header p {
             color: var(--text-muted);
-            font-size: 0.9rem;
+            font-size: 0.8rem;
         }
 
         .input-section {
-            padding: 30px;
+            padding: 20px;
             border-right: 1px solid rgba(255,255,255,0.05);
         }
 
         .output-section {
-            padding: 30px;
+            padding: 20px;
             background-color: rgba(0, 229, 255, 0.02);
             display: flex;
             flex-direction: column;
+            justify-content: space-between;
         }
 
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 12px;
         }
 
         label {
             display: block;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
             font-weight: 600;
             color: var(--text-muted);
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
@@ -101,9 +101,9 @@
             background-color: #0f1115;
             color: var(--text-main);
             border: 1px solid rgba(255,255,255,0.1);
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 1rem;
+            padding: 8px 10px;
+            border-radius: 6px;
+            font-size: 0.95rem;
             outline: none;
             transition: border-color 0.3s;
         }
@@ -121,39 +121,38 @@
         .slider-value {
             color: var(--primary-accent);
             font-weight: bold;
-            font-size: 1.1rem;
+            font-size: 0.95rem;
         }
 
-        /* Custom Range Slider */
         input[type=range] {
             -webkit-appearance: none;
             padding: 0;
-            height: 6px;
+            height: 5px;
             background: #2a2e39;
             border-radius: 3px;
-            margin-top: 10px;
+            margin-top: 6px;
             border: none;
         }
         
         input[type=range]::-webkit-slider-thumb {
             -webkit-appearance: none;
-            height: 20px;
-            width: 20px;
+            height: 16px;
+            width: 16px;
             border-radius: 50%;
             background: var(--primary-accent);
             cursor: pointer;
-            box-shadow: 0 0 10px rgba(0, 229, 255, 0.5);
+            box-shadow: 0 0 8px rgba(0, 229, 255, 0.5);
         }
 
         .specs-card {
             background: rgba(255,255,255,0.03);
             border: 1px solid rgba(255,255,255,0.08);
             border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 25px;
+            padding: 10px 15px;
+            margin-bottom: 15px;
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 15px;
+            gap: 10px;
         }
 
         .spec-item {
@@ -162,13 +161,13 @@
         }
 
         .spec-label {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: var(--text-muted);
             text-transform: uppercase;
         }
 
         .spec-value {
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: bold;
             color: #fff;
         }
@@ -176,51 +175,50 @@
         .result-card {
             background: linear-gradient(135deg, rgba(0,229,255,0.1) 0%, rgba(255,42,109,0.1) 100%);
             border: 1px solid rgba(0,229,255,0.3);
-            border-radius: 12px;
-            padding: 25px;
+            border-radius: 10px;
+            padding: 15px;
             text-align: center;
-            margin-top: auto;
-            margin-bottom: 20px;
+            margin-bottom: 12px;
         }
 
         .result-title {
             color: var(--primary-accent);
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 10px;
+            letter-spacing: 1.5px;
+            margin-bottom: 4px;
         }
 
         .result-range {
-            font-size: 2.5rem;
+            font-size: 2rem;
             font-weight: 800;
             color: #fff;
-            text-shadow: 0 0 15px rgba(0,229,255,0.4);
-            margin-bottom: 5px;
+            text-shadow: 0 0 12px rgba(0,229,255,0.4);
+            margin-bottom: 2px;
         }
 
         .result-sub {
             color: var(--text-muted);
-            font-size: 0.85rem;
+            font-size: 0.75rem;
         }
 
         .breakdown {
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: var(--text-muted);
             background: #0f1115;
-            padding: 15px;
-            border-radius: 8px;
+            padding: 10px 12px;
+            border-radius: 6px;
         }
         
         .breakdown-row {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
         }
         
         .breakdown-row:last-child {
             margin-bottom: 0;
-            padding-top: 8px;
+            padding-top: 4px;
             border-top: 1px solid rgba(255,255,255,0.1);
             color: #fff;
             font-weight: bold;
@@ -231,7 +229,7 @@
 
     <div class="container">
         <div class="header">
-            <h1>EUC Range Oracle</h1>
+            <h1>Euc Range Calculator</h1>
             <p>Smart charging calculator based on quadratic drag physics</p>
         </div>
 
@@ -272,30 +270,32 @@
         </div>
 
         <div class="output-section">
-            <label>Hardware Specs</label>
-            <div class="specs-card">
-                <div class="spec-item">
-                    <span class="spec-label">Battery</span>
-                    <span class="spec-value" id="spec-battery">3600 Wh</span>
+            <div>
+                <label>Hardware Specs</label>
+                <div class="specs-card">
+                    <div class="spec-item">
+                        <span class="spec-label">Battery</span>
+                        <span class="spec-value" id="spec-battery">3600 Wh</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">Motor</span>
+                        <span class="spec-value" id="spec-motor">4000 W</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">Tire Size</span>
+                        <span class="spec-value" id="spec-tire">20"</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">Suspension</span>
+                        <span class="spec-value" id="spec-suspension">Yes</span>
+                    </div>
                 </div>
-                <div class="spec-item">
-                    <span class="spec-label">Motor</span>
-                    <span class="spec-value" id="spec-motor">4000 W</span>
-                </div>
-                <div class="spec-item">
-                    <span class="spec-label">Tire Size</span>
-                    <span class="spec-value" id="spec-tire">20"</span>
-                </div>
-                <div class="spec-item">
-                    <span class="spec-label">Suspension</span>
-                    <span class="spec-value" id="spec-suspension">Yes</span>
-                </div>
-            </div>
 
-            <div class="result-card">
-                <div class="result-title">Suggested Charge Window</div>
-                <div class="result-range" id="result-window">65 - 75 mi</div>
-                <div class="result-sub">Leaving 20% buffer to prevent voltage sag</div>
+                <div class="result-card">
+                    <div class="result-title">Suggested Charge Window</div>
+                    <div class="result-range" id="result-window">65 - 75 mi</div>
+                    <div class="result-sub">Leaving 20% buffer to prevent voltage sag</div>
+                </div>
             </div>
 
             <div class="breakdown">
@@ -318,27 +318,42 @@
     <script>
         const eucDatabase = {
             "Begode": [
+                { id: "panther", name: "Panther", battery: 4400, motor: 5000, tire: 22, suspension: true },
                 { id: "ex30", name: "EX30", battery: 3600, motor: 4000, tire: 20, suspension: true },
                 { id: "master_pro_v2", name: "Master Pro V2", battery: 4800, motor: 4500, tire: 22, suspension: true },
-                { id: "falcon", name: "Falcon", battery: 900, motor: 1000, tire: 14, suspension: true },
+                { id: "et_max", name: "ET Max", battery: 3000, motor: 4500, tire: 20, suspension: true },
+                { id: "blitz", name: "Blitz", battery: 2400, motor: 3200, tire: 20, suspension: true },
                 { id: "t4_pro", name: "T4 Pro", battery: 1800, motor: 2500, tire: 16, suspension: true },
-                { id: "blitz", name: "Blitz", battery: 2400, motor: 3200, tire: 20, suspension: true }
+                { id: "falcon", name: "Falcon", battery: 900, motor: 1000, tire: 14, suspension: true }
             ],
             "LeaperKim": [
-                { id: "sherman_l", name: "Sherman L", battery: 4000, motor: 3200, tire: 20, suspension: true },
+                { id: "oryx", name: "Oryx", battery: 4200, motor: 4200, tire: 14, suspension: true },
+                { id: "sherman_l", name: "Sherman-L", battery: 4000, motor: 3200, tire: 20, suspension: true },
                 { id: "sherman_s", name: "Sherman-S", battery: 3600, motor: 3000, tire: 20, suspension: true },
                 { id: "lynx", name: "Lynx", battery: 2700, motor: 3200, tire: 20, suspension: true },
-                { id: "patton", name: "Patton", battery: 2220, motor: 3000, tire: 16, suspension: true }
+                { id: "patton_s", name: "Patton-S", battery: 2220, motor: 3000, tire: 16, suspension: true }
             ],
             "Inmotion": [
-                { id: "v14", name: "V14 Adventure", battery: 2400, motor: 4000, tire: 16, suspension: true },
+                { id: "p6", name: "P6", battery: 4200, motor: 6000, tire: 14, suspension: true },
                 { id: "v13", name: "V13 Challenger", battery: 3024, motor: 4500, tire: 22, suspension: true },
+                { id: "v14", name: "V14 Adventure", battery: 2400, motor: 4000, tire: 16, suspension: true },
+                { id: "v11y", name: "V11Y", battery: 1500, motor: 2500, tire: 18, suspension: true },
                 { id: "v12_ht", name: "V12 High Torque", battery: 1750, motor: 2800, tire: 16, suspension: false }
             ],
             "King Song": [
+                { id: "f18", name: "F18", battery: 2664, motor: 5000, tire: 20, suspension: true },
                 { id: "s22_pro", name: "S22 Pro", battery: 2220, motor: 3300, tire: 20, suspension: true },
                 { id: "s16_pro", name: "S16 Pro", battery: 1480, motor: 3000, tire: 16, suspension: true },
                 { id: "16x", name: "16X", battery: 1554, motor: 2200, tire: 16, suspension: false }
+            ],
+            "Extreme Bull": [
+                { id: "commander_max", name: "Commander Max", battery: 4440, motor: 4000, tire: 20, suspension: true },
+                { id: "commander_gt", name: "Commander GT Pro+", battery: 4400, motor: 4000, tire: 20, suspension: true }
+            ],
+            "Nosfet": [
+                { id: "apex", name: "Apex", battery: 2700, motor: 3500, tire: 18, suspension: true },
+                { id: "xeno", name: "Xeno", battery: 2200, motor: 2500, tire: 20, suspension: true },
+                { id: "aeon", name: "Aeon", battery: 1350, motor: 2000, tire: 16, suspension: true }
             ]
         };
 
@@ -361,7 +376,6 @@
             calcMax: document.getElementById('calc-max')
         };
 
-        // Initialize Dropdowns
         function initSelects() {
             Object.keys(eucDatabase).forEach(brand => {
                 const opt = document.createElement('option');
@@ -370,10 +384,8 @@
                 dom.brand.appendChild(opt);
             });
             
-            // Set Default Brand to Begode
             dom.brand.value = "Begode";
             updateModels();
-            // Set Default Model to EX30
             dom.model.value = "ex30";
         }
 
@@ -403,44 +415,30 @@
             const speed = parseInt(dom.speed.value);
             const temp = parseInt(dom.temp.value);
 
-            // Update Specs UI
             dom.specBattery.textContent = `${model.battery} Wh`;
             dom.specMotor.textContent = `${model.motor} W`;
             dom.specTire.textContent = `${model.tire}"`;
             dom.specSuspension.textContent = model.suspension ? "Yes" : "No";
 
-            // Physics Calculation
-            // 1. Rolling Resistance (scales linearly with weight)
             const rollingResistance = 15 + ((weight - 160) * 0.05);
-
-            // 2. Aerodynamic Drag (Quadratic scale based on speed)
-            // Profile width slightly affects aero base
             const aeroBase = 6 + ((weight - 160) * 0.02); 
             const aeroDrag = aeroBase * Math.pow(speed / 15, 2);
-
-            // 3. Suspension Penalty
             const suspensionPenalty = model.suspension ? 2 : 0;
 
-            // Total Consumption
             let whPerMile = rollingResistance + aeroDrag + suspensionPenalty;
 
-            // 4. Temperature Penalty (affects available battery, not consumption)
-            // Lithium loses ~1% capacity per degree below 60F
             let tempPenaltyFactor = 1.0;
             if (temp < 60) {
                 tempPenaltyFactor = 1.0 - ((60 - temp) * 0.01);
             }
-            // Cap penalty at 40% loss
             tempPenaltyFactor = Math.max(0.6, tempPenaltyFactor); 
 
-            // Calculate Ranges
             const actualCapacity = model.battery * tempPenaltyFactor;
-            const usableCapacity = actualCapacity * 0.80; // 20% Safety Buffer
+            const usableCapacity = actualCapacity * 0.80; 
 
             const safeRange = usableCapacity / whPerMile;
             const maxRange = actualCapacity / whPerMile;
 
-            // Update UI
             dom.calcConsumption.textContent = `${whPerMile.toFixed(1)} Wh/mi`;
             dom.calcUsable.textContent = `${Math.round(usableCapacity)} Wh`;
             dom.calcMax.textContent = `${Math.round(maxRange)} mi`;
@@ -450,7 +448,6 @@
             dom.resultWindow.textContent = `${minWindow} - ${maxWindow} mi`;
         }
 
-        // Event Listeners
         dom.brand.addEventListener('change', updateModels);
         dom.model.addEventListener('change', calculateRange);
 
@@ -461,7 +458,6 @@
             });
         });
 
-        // Init
         initSelects();
         calculateRange();
     </script>
