@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -292,7 +291,7 @@
                 <div class="result-card">
                     <div class="result-title">Suggested Charge Window</div>
                     <div class="result-range" id="result-window">65 - 75 mi</div>
-                    <div class="result-sub">Leaving 20% buffer to prevent voltage sag</div>
+                    <div class="result-sub">Leaving 20% safety margin</div>
                 </div>
             </div>
 
@@ -418,20 +417,31 @@
             dom.specTire.textContent = `${model.tire}"`;
             dom.specSuspension.textContent = model.suspension ? "Yes" : "No";
 
-            const rollingResistance = 15 + ((weight - 160) * 0.05);
-            const aeroBase = 6 + ((weight - 160) * 0.02); 
-            const aeroDrag = aeroBase * Math.pow(speed / 15, 2);
-            const suspensionPenalty = model.suspension ? 2 : 0;
+            // REFINED PHYSICS MODEL:
+            // 1. Rolling Resistance: scales linearly with rider weight (base 14 Wh/mi at 160 lbs)
+            const rollingResistance = 12 + (weight * 0.012);
 
+            // 2. Aerodynamic Drag: True quadratic scaling with speed ($v^2$)
+            // At 45 mph for a heavy rider, this correctly drives the penalty up heavily (reproducing real-world brick-wall resistance)
+            const dragCoefficient = 0.038;
+            const aeroDrag = dragCoefficient * Math.pow(speed, 2) * (weight / 160);
+
+            // 3. Mechanical/Suspension Damping Overhead
+            const suspensionPenalty = model.suspension ? 1.5 : 0;
+
+            // Total Power Consumption (Wh per mile)
             let whPerMile = rollingResistance + aeroDrag + suspensionPenalty;
 
-            let tempPenaltyFactor = 1.0;
+            // 4. Temperature Impact on Lithium Cell Chemistry (Internal Resistance & Capacity Drop)
+            // Below 60°F, available energy capacity drops roughly 0.8% to 1% per degree.
+            let tempCapacityFactor = 1.0;
             if (temp < 60) {
-                tempPenaltyFactor = 1.0 - ((60 - temp) * 0.01);
+                tempCapacityFactor = 1.0 - ((60 - temp) * 0.008);
             }
-            tempPenaltyFactor = Math.max(0.6, tempPenaltyFactor); 
+            tempCapacityFactor = Math.max(0.55, tempCapacityFactor); // Floor at 55% in extreme deep freeze
 
-            const actualCapacity = model.battery * tempPenaltyFactor;
+            // Total available energy vs usable energy (reserving 20% to prevent severe low-voltage sag under load)
+            const actualCapacity = model.battery * tempCapacityFactor;
             const usableCapacity = actualCapacity * 0.80; 
 
             const safeRange = usableCapacity / whPerMile;
