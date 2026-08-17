@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0f1115">
+<title>EUC Range Calculator</title>
+<style>
+    :root {
+        --bg: #0f1115;
+        --panel: #1a1d24;
+        --sunk: #0c0e12;
+        --accent: #00e5ff;
+        --accent2: #ff2a6d;
+        --text: #f0f4f8;
+        --muted: #8b95a5;
+        --line: rgba(255,255,255,0.08);
+        --r: 10px;
+    }
+
+    /* Everything scales off viewport height so it never scrolls,
+       but stays chunky on tall phones. */
+    html { font-size: clamp(11.5px, 1.78vh, 17px); }
+
+    * { box-sizing: border-box; margin: 0; padding: 0;
+        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        -webkit-tap-highlight-color: transparent; }
+
+    html, body { height: 100%; }
+
+    body {
+        background: var(--bg);
+        color: var(--text);
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        padding: 0.4rem;
+        overflow: hidden;
+    }
+
+    .container {
+        background: var(--panel);
+        width: 100%;
+        max-width: 860px;
+        height: 100%;
+        border-radius: var(--r);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .header {
+        padding: 0.65rem 1rem;
+        background: linear-gradient(90deg, #13151a 0%, #1a1d24 100%);
+        border-bottom: 2px solid var(--accent);
+        text-align: center;
+        flex: 0 0 auto;
+    }
+    .header h1 {
+        font-size: 1.6rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+    }
+    .header span { color: var(--accent); }
+
+    .body-grid {
+        flex: 1 1 auto;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    @media (min-width: 800px) {
+        .body-grid { flex-direction: row; }
+        .body-grid > section { flex: 1 1 50%; }
+        .input-section { border-right: 1px solid var(--line); }
+    }
+
+    .input-section, .output-section {
+        padding: 0.7rem 0.9rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-around;
+        gap: 0.35rem;
+        min-height: 0;
+    }
+    .output-section { background: rgba(0,229,255,0.02); }
+
+    label, .cap {
+        display: block;
+        font-weight: 700;
+        color: var(--muted);
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.7px;
+        margin-bottom: 0.2rem;
+    }
+
+    /* ---- Custom themed dropdowns ---- */
+    .select-wrap { position: relative; }
+    .select-wrap::after {
+        content: "";
+        position: absolute;
+        right: 0.85rem;
+        top: 50%;
+        width: 0.55rem; height: 0.55rem;
+        border-right: 2px solid var(--accent);
+        border-bottom: 2px solid var(--accent);
+        transform: translateY(-70%) rotate(45deg);
+        pointer-events: none;
+    }
+    select {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 100%;
+        min-height: 2.85rem;
+        background: linear-gradient(180deg, #171b22 0%, #0f1218 100%);
+        color: var(--text);
+        border: 1px solid rgba(0,229,255,0.28);
+        padding: 0.5rem 2.2rem 0.5rem 0.8rem;
+        border-radius: 8px;
+        font-size: 1.05rem;
+        font-weight: 600;
+        outline: none;
+        transition: border-color .2s, box-shadow .2s;
+    }
+    select:focus, select:active {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(0,229,255,0.15);
+    }
+    /* themes the open list on Android Chrome / desktop */
+    select option {
+        background-color: #141821;
+        color: #f0f4f8;
+        font-weight: 600;
+    }
+    select option:checked { background-color: #10333c; color: var(--accent); }
+
+    /* ---- Sliders ---- */
+    .slider-header { display: flex; justify-content: space-between; align-items: baseline; }
+    .slider-value { color: var(--accent); font-weight: 800; font-size: 1.15rem; }
+
+    input[type=range] {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 100%;
+        height: 0.75rem;
+        background: linear-gradient(90deg, rgba(0,229,255,.35), rgba(255,42,109,.35));
+        border-radius: 0.5rem;
+        border: 1px solid var(--line);
+        outline: none;
+        margin: 0.35rem 0 0.15rem;
+        padding: 0;
+        touch-action: pan-y;
+    }
+    input[type=range]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        height: 1.85rem; width: 1.85rem;
+        border-radius: 50%;
+        background: radial-gradient(circle at 35% 35%, #ffffff 0%, var(--accent) 55%, #0092a8 100%);
+        border: 2px solid #0f1115;
+        cursor: pointer;
+        box-shadow: 0 0 10px rgba(0,229,255,0.55);
+    }
+    input[type=range]::-moz-range-thumb {
+        height: 1.85rem; width: 1.85rem;
+        border-radius: 50%;
+        background: var(--accent);
+        border: 2px solid #0f1115;
+        box-shadow: 0 0 10px rgba(0,229,255,0.55);
+    }
+
+    /* ---- Output ---- */
+    .specs-card {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 0.5rem 0.7rem;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.4rem 0.6rem;
+    }
+    .spec-item { display: flex; flex-direction: column; }
+    .spec-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+    .spec-value { font-size: 1.05rem; font-weight: 700; color: #fff; }
+
+    .result-card {
+        background: linear-gradient(135deg, rgba(0,229,255,0.12) 0%, rgba(255,42,109,0.12) 100%);
+        border: 1px solid rgba(0,229,255,0.35);
+        border-radius: 10px;
+        padding: 0.6rem 0.5rem;
+        text-align: center;
+    }
+    .result-title { color: var(--accent); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1.2px; }
+    .result-range { font-size: 2.2rem; font-weight: 800; line-height: 1.15; text-shadow: 0 0 12px rgba(0,229,255,0.45); }
+    .result-sub { color: var(--muted); font-size: 0.78rem; }
+
+    .breakdown {
+        font-size: 0.86rem;
+        color: var(--muted);
+        background: var(--sunk);
+        padding: 0.55rem 0.7rem;
+        border-radius: 8px;
+        border: 1px solid var(--line);
+    }
+    .breakdown-row { display: flex; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.22rem; }
+    .breakdown-row span:last-child { color: #dfe6ee; font-weight: 600; white-space: nowrap; }
+    .breakdown-row:last-child {
+        margin-bottom: 0;
+        padding-top: 0.3rem;
+        border-top: 1px solid var(--line);
+    }
+    .breakdown-row:last-child span { color: #fff; font-weight: 700; }
+    .warn span:last-child { color: var(--accent2) !important; }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <header class="header">
+        <h1>EUC <span>Range</span> Calculator</h1>
+    </header>
+
+    <div class="body-grid">
+        <section class="input-section">
+            <div>
+                <label for="brand">Brand</label>
+                <div class="select-wrap"><select id="brand"></select></div>
+            </div>
+
+            <div>
+                <label for="model">Model</label>
+                <div class="select-wrap"><select id="model"></select></div>
+            </div>
+
+            <div>
+                <div class="slider-header">
+                    <label for="weight">Rider + Gear (lbs)</label>
+                    <span class="slider-value" id="weightVal">140</span>
+                </div>
+                <input type="range" id="weight" min="100" max="350" step="5" value="140">
+            </div>
+
+            <div>
+                <div class="slider-header">
+                    <label for="speed">Avg Cruising Speed (mph)</label>
+                    <span class="slider-value" id="speedVal">33</span>
+                </div>
+                <input type="range" id="speed" min="8" max="55" step="1" value="33">
+            </div>
+
+            <div>
+                <div class="slider-header">
+                    <label for="temp">Ambient Temp (°F)</label>
+                    <span class="slider-value" id="tempVal">70</span>
+                </div>
+                <input type="range" id="temp" min="10" max="110" step="1" value="70">
+            </div>
+        </section>
+
+        <section class="output-section">
+            <div class="specs-card">
+                <div class="spec-item"><span class="spec-label">Battery</span><span class="spec-value" id="spec-battery">—</span></div>
+                <div class="spec-item"><span class="spec-label">Motor</span><span class="spec-value" id="spec-motor">—</span></div>
+                <div class="spec-item"><span class="spec-label">Tire / Weight</span><span class="spec-value" id="spec-tire">—</span></div>
+                <div class="spec-item"><span class="spec-label">Suspension</span><span class="spec-value" id="spec-suspension">—</span></div>
+            </div>
+
+            <div class="result-card">
+                <div class="result-title">Plug In Between</div>
+                <div class="result-range" id="result-window">—</div>
+                <div class="result-sub">Hits 20% pack remaining at <b id="result-target">—</b></div>
+            </div>
+
+            <div class="breakdown">
+                <div class="breakdown-row"><span>Est. consumption</span><span id="calc-consumption">—</span></div>
+                <div class="breakdown-row" id="row-temp"><span>Cold-weather capacity</span><span id="calc-temp">—</span></div>
+                <div class="breakdown-row"><span>Usable to 20% (of <span id="calc-eff">—</span>)</span><span id="calc-usable">—</span></div>
+                <div class="breakdown-row"><span>Range if run to empty</span><span id="calc-max">—</span></div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<script>
+/* ------------------------------------------------------------------
+   Wheel database.  curbLb = wheel's own weight in lbs (estimates —
+   edit freely, it feeds directly into the rolling-resistance math).
+------------------------------------------------------------------ */
+const eucDatabase = {
+    "Begode": [
+        { id:"panther",        name:"Panther",        battery:4400, motor:5000, tire:22, curbLb:132, suspension:true },
+        { id:"ex30",           name:"EX30",           battery:3600, motor:4000, tire:20, curbLb:106, suspension:true },
+        { id:"master_pro_v2",  name:"Master Pro V2",  battery:4800, motor:4500, tire:22, curbLb:121, suspension:true },
+        { id:"et_max",         name:"ET Max",         battery:3000, motor:4500, tire:20, curbLb:110, suspension:true },
+        { id:"blitz",          name:"Blitz",          battery:2400, motor:3200, tire:20, curbLb:88,  suspension:true },
+        { id:"t4_pro",         name:"T4 Pro",         battery:1800, motor:2500, tire:16, curbLb:66,  suspension:true },
+        { id:"falcon",         name:"Falcon",         battery:900,  motor:1000, tire:14, curbLb:44,  suspension:true }
+    ],
+    "LeaperKim": [
+        { id:"oryx",       name:"Oryx",      battery:4200, motor:4200, tire:14, curbLb:128, suspension:true },
+        { id:"sherman_l",  name:"Sherman-L", battery:4000, motor:3200, tire:20, curbLb:112, suspension:true },
+        { id:"sherman_s",  name:"Sherman-S", battery:3600, motor:3000, tire:20, curbLb:99,  suspension:true },
+        { id:"lynx",       name:"Lynx",      battery:2700, motor:3200, tire:20, curbLb:99,  suspension:true },
+        { id:"patton_s",   name:"Patton-S",  battery:2220, motor:3000, tire:16, curbLb:79,  suspension:true }
+    ],
+    "Inmotion": [
+        { id:"p6",      name:"P6",              battery:4200, motor:6000, tire:14, curbLb:121, suspension:true },
+        { id:"v13",     name:"V13 Challenger",  battery:3024, motor:4500, tire:22, curbLb:121, suspension:true },
+        { id:"v14",     name:"V14 Adventure",   battery:2400, motor:4000, tire:16, curbLb:101, suspension:true },
+        { id:"v11y",    name:"V11Y",            battery:1500, motor:2500, tire:18, curbLb:70,  suspension:true },
+        { id:"v12_ht",  name:"V12 High Torque", battery:1750, motor:2800, tire:16, curbLb:60,  suspension:false }
+    ],
+    "King Song": [
+        { id:"f18",      name:"F18",      battery:2664, motor:5000, tire:20, curbLb:97, suspension:true },
+        { id:"s22_pro",  name:"S22 Pro",  battery:2220, motor:3300, tire:20, curbLb:79, suspension:true },
+        { id:"s16_pro",  name:"S16 Pro",  battery:1480, motor:3000, tire:16, curbLb:65, suspension:true },
+        { id:"16x",      name:"16X",      battery:1554, motor:2200, tire:16, curbLb:57, suspension:false }
+    ],
+    "Extreme Bull": [
+        { id:"commander_max", name:"Commander Max",     battery:4440, motor:4000, tire:20, curbLb:121, suspension:true },
+        { id:"commander_gt",  name:"Commander GT Pro+", battery:4400, motor:4000, tire:20, curbLb:121, suspension:true }
+    ],
+    "Nosfet": [
+        { id:"apex", name:"Apex", battery:2700, motor:3500, tire:18, curbLb:95, suspension:true },
+        { id:"xeno", name:"Xeno", battery:2200, motor:2500, tire:20, curbLb:85, suspension:true },
+        { id:"aeon", name:"Aeon", battery:1350, motor:2000, tire:16, curbLb:62, suspension:true }
+    ]
+};
+
+const dom = {};
+['brand','model','weight','weightVal','speed','speedVal','temp','tempVal']
+    .forEach(k => dom[k] = document.getElementById(k));
+[['specBattery','spec-battery'],['specMotor','spec-motor'],['specTire','spec-tire'],
+ ['specSuspension','spec-suspension'],['resultWindow','result-window'],['resultTarget','result-target'],
+ ['calcConsumption','calc-consumption'],['calcTemp','calc-temp'],['calcUsable','calc-usable'],
+ ['calcEff','calc-eff'],['calcMax','calc-max'],['rowTemp','row-temp']]
+    .forEach(([k,id]) => dom[k] = document.getElementById(id));
+
+/* ---------------- physics constants ---------------- */
+const LB_KG   = 0.45359237;
+const G       = 9.80665;
+const MILE_M  = 1609.344;
+const MPH_MS  = 0.44704;
+const DRIVE_EFF = 0.82;   // motor + controller + drivetrain, round trip
+const RESERVE   = 0.20;   // pack % you want left in the tank
+
+function tireCrr(tire) {
+    // fat knobby moto tires roll worse than smaller street tires
+    if (tire >= 21) return 0.0150;
+    if (tire >= 18) return 0.0135;
+    return 0.0120;
+}
+
+function tempCapacityFactor(f) {
+    // Li-ion delivers less usable energy when cold, and the wheel
+    // hits low-voltage cutoff earlier because of sag under load.
+    if (f < 68) return Math.max(0.72, 1 - (68 - f) * 0.0035);
+    if (f > 95) return Math.max(0.95, 1 - (f - 95) * 0.0015);
+    return 1;
+}
+
+function whPerMile(model, riderLb, mph, tempF) {
+    const totalKg = (riderLb + model.curbLb) * LB_KG;
+
+    // 1. Rolling resistance — scales with TOTAL mass (rider + wheel)
+    const rollN = tireCrr(model.tire) * totalKg * G;
+
+    // 2. Aero drag — quadratic in speed, scales with AIR DENSITY and
+    //    frontal area (not with rider weight directly)
+    const tempK = (tempF - 32) * 5 / 9 + 273.15;
+    const rho   = 1.225 * (288.15 / tempK);         // cold air = denser = more drag
+    const riderCdA = 0.46 * Math.pow(riderLb / 165, 0.35);  // bigger rider, mildly bigger area
+    const wheelCdA = 0.055 + (model.tire - 14) * 0.006;     // taller wheel, more area
+    const v = mph * MPH_MS;
+    const aeroN = 0.5 * rho * (riderCdA + wheelCdA) * v * v;
+
+    // 3. Propulsion energy at the battery
+    const propulsion = ((rollN + aeroN) * MILE_M / 3600) / DRIVE_EFF;
+
+    // 4. Fixed overhead: balance loop, board, lights, damper drag.
+    //    Time-based, so it hurts a lot more at low speed.
+    const idleW = 95 + (model.suspension ? 25 : 0);
+
+    return propulsion + idleW / mph;
+}
+
+function getCurrentModel() {
+    return eucDatabase[dom.brand.value].find(m => m.id === dom.model.value);
+}
+
+function initSelects() {
+    Object.keys(eucDatabase).forEach(b => {
+        dom.brand.appendChild(Object.assign(document.createElement('option'), { value:b, textContent:b }));
+    });
+    dom.brand.value = "Begode";
+    updateModels("ex30");
+}
+
+function updateModels(preferId) {
+    dom.model.innerHTML = '';
+    eucDatabase[dom.brand.value].forEach(m => {
+        dom.model.appendChild(Object.assign(document.createElement('option'), { value:m.id, textContent:m.name }));
+    });
+    if (preferId) dom.model.value = preferId;
+    calculate();
+}
+
+function calculate() {
+    const model = getCurrentModel();
+    if (!model) return;
+
+    const riderLb = +dom.weight.value;
+    const mph     = +dom.speed.value;
+    const tempF   = +dom.temp.value;
+
+    dom.specBattery.textContent    = model.battery + " Wh";
+    dom.specMotor.textContent      = model.motor + " W";
+    dom.specTire.textContent       = model.tire + '" / ' + model.curbLb + " lb";
+    dom.specSuspension.textContent = model.suspension ? "Yes" : "No";
+
+    const consumption = whPerMile(model, riderLb, mph, tempF);
+    const tFactor     = tempCapacityFactor(tempF);
+    const effective   = model.battery * tFactor;      // Wh you can actually pull today
+    const usable      = effective * (1 - RESERVE);    // Wh down to the 20% mark
+
+    const chargeAt = usable / consumption;            // miles until 20% left
+    const maxRange = effective / consumption;         // miles to a dead pack
+
+    // Window: ±10% of the distance, never wider than a 10-mile spread
+    const half = Math.min(5, Math.max(1.5, chargeAt * 0.10));
+    const lo = Math.max(0, Math.round(chargeAt - half));
+    const hi = Math.round(chargeAt + half);
+
+    dom.resultWindow.textContent = lo + " – " + hi + " mi";
+    dom.resultTarget.textContent = chargeAt.toFixed(1) + " mi";
+    dom.calcConsumption.textContent = consumption.toFixed(1) + " Wh/mi";
+    dom.calcTemp.textContent = Math.round(tFactor * 100) + "% (" + Math.round(effective) + " Wh)";
+    dom.rowTemp.classList.toggle('warn', tFactor < 0.95);
+    dom.calcEff.textContent  = Math.round(effective) + " Wh";
+    dom.calcUsable.textContent = Math.round(usable) + " Wh";
+    dom.calcMax.textContent = Math.round(maxRange) + " mi";
+}
+
+dom.brand.addEventListener('change', () => updateModels());
+dom.model.addEventListener('change', calculate);
+['weight','speed','temp'].forEach(id => {
+    dom[id].addEventListener('input', e => {
+        dom[id + 'Val'].textContent = e.target.value;
+        calculate();
+    });
+});
+
+initSelects();
+</script>
+</body>
+</html>
