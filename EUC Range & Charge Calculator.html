@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <!-- Enables full pinch-to-zoom flexibility on mobile devices -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, maximum-scale=5.0">
+  <title>EUC Range & Charge Calculator</title>
+  <style>
+    /* Base Resets & Layout */
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      background-color: #0b0e14;
+      color: #f0f6fc;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 18px; /* Increased base scale for legibility */
+      line-height: 1.4;
+    }
+
+    /* Main Container with top margin/padding removed */
+    .app-container {
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 8px 12px 24px 12px; /* Minimal top cushion */
+    }
+
+    /* Main Card Layout */
+    .card {
+      background-color: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Title Styling */
+    h1 {
+      font-size: 1.4rem;
+      font-weight: 800;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #ffffff;
+      margin: 0 0 16px 0;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #00d2ff;
+    }
+
+    /* Form Field Layout */
+    .field-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #8b949e;
+      margin-bottom: 6px;
+    }
+
+    .label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .label-value {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #00d2ff;
+    }
+
+    /* Dropdowns & Text Inputs */
+    select, input[type="number"] {
+      width: 100%;
+      padding: 12px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      background-color: #0d1117;
+      color: #ffffff;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      outline: none;
+      appearance: none;
+    }
+
+    select:focus, input[type="number"]:focus {
+      border-color: #00d2ff;
+    }
+
+    /* Range Sliders */
+    input[type="range"] {
+      width: 100%;
+      height: 32px; /* Oversized for easy dragging */
+      accent-color: #00d2ff;
+      cursor: pointer;
+    }
+
+    /* Grid for Charge Settings */
+    .three-col-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+
+    .three-col-grid input {
+      text-align: center;
+      font-size: 1.25rem;
+      padding: 8px 4px;
+    }
+
+    /* Hardware Specs Panel */
+    .specs-panel {
+      background-color: #0d1117;
+      border: 1px solid #21262d;
+      border-radius: 8px;
+      padding: 12px;
+      margin: 16px 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .spec-item .spec-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      color: #8b949e;
+      font-weight: 700;
+    }
+
+    .spec-item .spec-val {
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: #ffffff;
+    }
+
+    /* Result Metric Cards */
+    .results-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .result-card {
+      background: linear-gradient(180deg, #1f242d 0%, #161b22 100%);
+      border: 1px solid #00d2ff;
+      border-radius: 10px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .result-card .card-title {
+      font-size: 0.75rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: #00d2ff;
+      margin-bottom: 4px;
+    }
+
+    .result-card .primary-val {
+      font-size: 1.6rem;
+      font-weight: 900;
+      color: #ffffff;
+      line-height: 1.1;
+    }
+
+    .result-card .sub-text {
+      font-size: 0.75rem;
+      color: #8b949e;
+      margin-top: 4px;
+    }
+
+    /* Breakdown List */
+    .stats-list {
+      background-color: #0d1117;
+      border-radius: 8px;
+      padding: 8px 12px;
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      font-size: 0.95rem;
+      color: #8b949e;
+    }
+
+    .stat-row.bold {
+      font-weight: 800;
+      color: #ffffff;
+      border-top: 1px solid #21262d;
+      padding-top: 8px;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <div class="card">
+      <h1>EUC Range & Charge Calculator</h1>
+
+      <!-- Brand Selection -->
+      <div class="field-group">
+        <label for="brand">Brand</label>
+        <select id="brand">
+          <option value="begode" selected>Begode</option>
+          <option value="kingsong">King Song</option>
+          <option value="inmotion">InMotion</option>
+          <option value="leaperkim">LeaperKim</option>
+        </select>
+      </div>
+
+      <!-- Model Selection -->
+      <div class="field-group">
+        <label for="model">Model</label>
+        <select id="model">
+          <option value="ex30" selected>EX30</option>
+        </select>
+      </div>
+
+      <!-- Rider Weight -->
+      <div class="field-group">
+        <div class="label-row">
+          <label for="weight">Rider Weight (lbs)</label>
+          <span class="label-value" id="weight-val">140</span>
+        </div>
+        <input type="range" id="weight" min="100" max="350" value="140">
+      </div>
+
+      <!-- Speed -->
+      <div class="field-group">
+        <div class="label-row">
+          <label for="speed">Avg Cruising Speed (mph)</label>
+          <span class="label-value" id="speed-val">35</span>
+        </div>
+        <input type="range" id="speed" min="10" max="60" value="35">
+      </div>
+
+      <!-- Temperature -->
+      <div class="field-group">
+        <div class="label-row">
+          <label for="temp">Ambient Temp (°F)</label>
+          <span class="label-value" id="temp-val">65</span>
+        </div>
+        <input type="range" id="temp" min="20" max="110" value="65">
+      </div>
+
+      <!-- Charge Estimator Settings -->
+      <div class="field-group">
+        <label>Charge Estimator Settings</label>
+        <div class="three-col-grid">
+          <div>
+            <label for="start-pct" style="font-size: 0.7rem;">Start %</label>
+            <input type="number" id="start-pct" value="20" min="0" max="100">
+          </div>
+          <div>
+            <label for="target-pct" style="font-size: 0.7rem;">Target %</label>
+            <input type="number" id="target-pct" value="90" min="0" max="100">
+          </div>
+          <div>
+            <label for="amps" style="font-size: 0.7rem;">Amps (A)</label>
+            <input type="number" id="amps" value="10" min="1" max="20">
+          </div>
+        </div>
+      </div>
+
+      <!-- Hardware Specs -->
+      <div class="specs-panel">
+        <div class="spec-item">
+          <div class="spec-label">Battery</div>
+          <div class="spec-val">3600 Wh</div>
+        </div>
+        <div class="spec-item">
+          <div class="spec-label">Voltage</div>
+          <div class="spec-val">134.4 V</div>
+        </div>
+        <div class="spec-item">
+          <div class="spec-label">Motor</div>
+          <div class="spec-val">4000 W</div>
+        </div>
+        <div class="spec-item">
+          <div class="spec-label">Suspension</div>
+          <div class="spec-val">Yes</div>
+        </div>
+      </div>
+
+      <!-- Primary Output Cards -->
+      <div class="results-grid">
+        <div class="result-card">
+          <div class="card-title">Charge Window</div>
+          <div class="primary-val">47 - 57 mi</div>
+          <div class="sub-text">20% safety margin</div>
+        </div>
+        <div class="result-card">
+          <div class="card-title">Charge Time</div>
+          <div class="primary-val">2.2 hrs</div>
+          <div class="sub-text">1344W Charging</div>
+        </div>
+      </div>
+
+      <!-- Bottom Details -->
+      <div class="stats-list">
+        <div class="stat-row">
+          <span>Est. Consumption</span>
+          <span>55.9 Wh/mi</span>
+        </div>
+        <div class="stat-row">
+          <span>Usable Battery Capacity</span>
+          <span>2880 Wh</span>
+        </div>
+        <div class="stat-row bold">
+          <span>Theoretical Max Range</span>
+          <span>64 mi</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // Inline Sync for Slider Display Values
+    const syncSlider = (sliderId, displayId) => {
+      const slider = document.getElementById(sliderId);
+      const display = document.getElementById(displayId);
+      if (slider && display) {
+        slider.addEventListener('input', () => {
+          display.textContent = slider.value;
+        });
+      }
+    };
+
+    syncSlider('weight', 'weight-val');
+    syncSlider('speed', 'speed-val');
+    syncSlider('temp', 'temp-val');
+  </script>
+</body>
+</html>
